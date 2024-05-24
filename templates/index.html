@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recorder Control</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        .recording, .playing {
+            color: white;
+        }
+        .recording {
+            background-color: red;
+        }
+        .playing {
+            background-color: green;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        let isCurrentlyPlaying = false; // Global state to track playback
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUI();
+            attachEventListeners();
+        });
+
+
+        function initializeUI() {
+            updateRecordingsList();
+            initializeUniverseSelection();
+            // Any other UI initialization tasks
+        }
+
+        function initializeUniverseSelection() {
+            const universeSelection = document.getElementById('universeSelection');
+            universeSelection.innerHTML = ''; // Clear existing options just in case
+
+            // Predefine universes from 0 to 4
+            for (let i = 0; i <= 4; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Universe ${i}`;
+                universeSelection.appendChild(option);
+            }
+        }
+
+        function attachEventListeners() {
+            document.getElementById('recordButton').addEventListener('click', handleRecord);
+            document.getElementById('togglePlaybackButton').addEventListener('click', function() {
+                togglePlayback(this);
+            });
+            document.getElementById('renameButton').addEventListener('click', renameFile);
+            document.getElementById('deleteButton').addEventListener('click', deleteFile);
+            document.getElementById('broadcastButton').addEventListener("click", toggleBroadcast);
+        }
+
+        function updateRecordingsList() {
+            fetch('/list_art_files')
+                .then(response => response.json())
+                .then(data => {
+                    const playbackSelection = document.getElementById('playbackSelection');
+                    playbackSelection.innerHTML = ''; // Clear existing options
+                    data.files.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file;
+                        option.textContent = file;
+                        playbackSelection.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching recordings:', error));
+        }
+
+        function handleRecord() {
+            const button = document.getElementById('recordButton');
+            const isRecording = button.classList.contains('recording');
+            const action = isRecording ? 'stop' : 'start';
+            const filenameInput = document.getElementById('filenameInput');
+            const filename = filenameInput.value.trim();
+            const universe = document.getElementById('universeSelection').value;
+
+            if (action === 'start' && !filename) {
+                showFeedback('Please enter a filename.', 'danger');
+                return;
+            }
+
+            fetch('/record', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, filename, universe })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showFeedback(data.message, 'success');
+                button.textContent = isRecording ? 'Start Recording' : 'Stop Recording';
+                button.classList.toggle('recording', !isRecording);
+                updateRecordingsList();
+                if (action === 'start') filenameInput.value = ''; // Clear filename input after starting
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFeedback('An error occurred.', 'danger');
+            });
+        }
+
+        function togglePlayback(button) {
+            const action = isCurrentlyPlaying ? 'stop' : 'start';
+            const filename = document.getElementById('playbackSelection').value;
+            const universe = document.getElementById('universeSelection').value; // Capture the selected universe
+
+            fetch('/play', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, filename: filename, universe: universe }) // Send universe in the request
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                isCurrentlyPlaying = !isCurrentlyPlaying;
+                button.textContent = isCurrentlyPlaying ? 'Stop' : 'Play';
+                button.classList.toggle('playing', isCurrentlyPlaying);
+                showFeedback(data.message, 'success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showFeedback('Failed to toggle playback. ' + error.message, 'danger');
+            });
+        }
+
+
+        function renameFile() {
+            const oldName = document.getElementById('playbackSelection').value;
+            const newName = prompt('Enter new filename for ' + oldName + ':');
+            if (!newName || newName === oldName) {
+                showFeedback('No new name provided or name unchanged.', 'warning');
+                return;
+            }
+
+            fetch('/rename_file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: oldName, newname: newName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showFeedback('File renamed successfully.', 'success');
+                updateRecordingsList(); // Refresh the list
+            })
+            .catch(error => {
+                console.error('Error renaming file:', error);
+                showFeedback('Failed to rename file. ' + error.message, 'danger');
+            });
+        }
+
+
+        function deleteFile() {
+            const filename = document.getElementById('playbackSelection').value;
+            if (!confirm('Are you sure you want to delete ' + filename + '?')) return;
+
+            fetch('/delete_file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showFeedback('File deleted successfully.', 'success');
+                updateRecordingsList(); // Update the list to reflect the deletion
+            })
+            .catch(error => {
+                console.error('Error deleting file:', error);
+                showFeedback('Failed to delete file. ' + error.message, 'danger');
+            });
+        }
+
+
+        function showFeedback(message, type) {
+            const feedbackAlert = document.getElementById('feedbackAlert');
+            feedbackAlert.textContent = message;
+            feedbackAlert.className = `alert alert-${type}`;
+            feedbackAlert.style.display = 'block';
+            setTimeout(() => { feedbackAlert.style.display = 'none'; }, 3000);
+        }
+
+    </script>
+</head>
+<body class="p-3">
+    <div class="container">
+        <div id="feedbackAlert" class="alert" role="alert" style="display:none;"></div>
+
+        <!-- Universe Selection for Recording -->
+        <div class="mb-4">
+            <h2>Select Output Universe</h2>
+            <select id="universeSelection" class="form-control mb-2">
+                <!-- Universes will be dynamically populated -->
+            </select>
+        </div>
+
+        <!-- Recording Controls -->
+        <div class="mb-4">
+            <h2>Recording Controls</h2>
+            <form id="recordForm" class="mb-3">
+                <div class="form-group">
+                    <label for="filenameInput">Filename:</label>
+                    <input type="text" class="form-control" id="filenameInput" placeholder="Enter filename">
+                </div>
+                <button type="button" id="recordButton" class="btn btn-success">Start Recording</button>
+            </form>
+        </div>
+
+        <!-- Playback and File Management Controls -->
+        <div class="mb-4">
+            <h2>Playback & File Management</h2>
+            <select id="playbackSelection" class="form-control mb-2"></select>
+            <button id="togglePlaybackButton" class="btn btn-primary">Play</button>
+            <button id="renameButton" class="btn btn-warning">Rename</button>
+            <button id="deleteButton" class="btn btn-danger">Delete</button>
+        </div>
+    </div>
+    <script src="controlScript.js" defer></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    
+</body>
+</html>
