@@ -1,7 +1,8 @@
 OLA Recorder UI
 This project provides a web-based user interface for recording and playing back lighting data using the Open Lighting Architecture (OLA).
 
-Overview
+Overview:
+
 The ui_server.py script is the main server for the web UI. It leverages Flask to provide a simple web interface where users can control and monitor the recording of DMX data.
 
 Features
