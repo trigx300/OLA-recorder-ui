@@ -6,10 +6,13 @@ Overview:
 The ui_server.py script is the main server for the web UI. It leverages Flask to provide a simple web interface where users can control and monitor the recording of DMX data.
 
 Features:
-Start and stop recording of DMX data.
-View real-time status updates of the recording process.
-Manage saved recordings.
+
+  Start and stop recording of DMX data.
+  View real-time status updates of the recording process.
+  Manage saved recordings.
+ 
 Prerequisites
+
 To run this project, you will need:
 
 Python 3.x
