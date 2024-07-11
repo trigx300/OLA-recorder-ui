@@ -18,27 +18,17 @@ To run this project, you will need:
 Python 3.x
 Flask
 OLA (Open Lighting Architecture)
+
 Installation
+
 Clone the repository:
 
-bash
-Copy code
-git clone https://github.com/trigx300/OLA-recorder-ui.git
-cd OLA-recorder-ui
-Install the required Python packages:
+  git clone https://github.com/trigx300/OLA-recorder-ui.git
+  cd OLA-recorder-ui
+  sudo python install.py
+  sudo reboot
 
-bash
-Copy code
-pip install Flask
-Ensure OLA is installed and configured on your system. You can find installation instructions for OLA here.
-
-Usage
-Start the server:
-
-bash
-Copy code
-python ui_server.py
-Open your web browser and navigate to http://localhost:5000.
+Open your web browser and navigate to http://Rpi's_IPaddress:8080.
 
 Use the web interface to start and stop recording, and to manage your recordings.
 
