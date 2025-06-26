@@ -10,6 +10,7 @@ Features:
   Start and stop recording of DMX data.
   View real-time status updates of the recording process.
   Manage saved recordings.
+  Upload existing recordings and download backups.
  
 Prerequisites
 
@@ -37,10 +38,13 @@ ui_server.py
 This script sets up a Flask server with the following routes:
 
 /: Serves the main web interface.
-/start_recording: Starts recording DMX data.
-/stop_recording: Stops the current recording session.
-/status: Provides the current status of the recording process.
-/recordings: Lists all saved recordings.
+/list_art_files: Lists saved `.art` recordings.
+/record: Starts or stops a recording.
+/play: Begins or stops playback of a recording.
+/rename_file: Renames an existing recording.
+/delete_file: Deletes a recording.
+/download_file/<filename>: Downloads a recording for backup.
+/upload_file: Uploads a recording file to the server.
 The server communicates with OLA to handle the recording and playback of DMX data.
 
 Contributing

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import subprocess
 import os
 import logging
@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Index Page"  # Placeholder for your HTML return
+    return render_template('index.html')
 
 @app.route('/list_art_files')
 def list_art_files():
@@ -87,6 +87,25 @@ def delete_file():
         return jsonify({'message': "File deleted successfully"}), 200
     else:
         return jsonify({'error': "File not found"}), 404
+
+@app.route('/download_file/<path:filename>', methods=['GET'])
+def download_file(filename):
+    file_path = os.path.join(BASE_DIR, filename)
+    if os.path.exists(file_path):
+        return send_from_directory(BASE_DIR, filename, as_attachment=True)
+    return jsonify({'error': 'File not found'}), 404
+
+@app.route('/upload_file', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    filename = os.path.basename(file.filename)
+    save_path = os.path.join(BASE_DIR, filename)
+    file.save(save_path)
+    return jsonify({'message': 'File uploaded successfully'}), 200
         
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
