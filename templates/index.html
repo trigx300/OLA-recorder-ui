@@ -54,7 +54,8 @@
             });
             document.getElementById('renameButton').addEventListener('click', renameFile);
             document.getElementById('deleteButton').addEventListener('click', deleteFile);
-            document.getElementById('broadcastButton').addEventListener("click", toggleBroadcast);
+            document.getElementById('downloadButton').addEventListener('click', downloadFile);
+            document.getElementById('uploadButton').addEventListener('click', uploadFile);
         }
 
         function updateRecordingsList() {
@@ -179,6 +180,37 @@
             });
         }
 
+        function downloadFile() {
+            const filename = document.getElementById('playbackSelection').value;
+            if (!filename) return;
+            window.location.href = '/download_file/' + encodeURIComponent(filename);
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById('uploadInput');
+            if (fileInput.files.length === 0) {
+                showFeedback('Please select a file to upload.', 'warning');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload_file', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                showFeedback(data.message, 'success');
+                fileInput.value = '';
+                updateRecordingsList();
+            })
+            .catch(error => {
+                console.error('Error uploading file:', error);
+                showFeedback('Failed to upload file. ' + error.message, 'danger');
+            });
+        }
+
 
         function showFeedback(message, type) {
             const feedbackAlert = document.getElementById('feedbackAlert');
@@ -221,6 +253,9 @@
             <button id="togglePlaybackButton" class="btn btn-primary">Play</button>
             <button id="renameButton" class="btn btn-warning">Rename</button>
             <button id="deleteButton" class="btn btn-danger">Delete</button>
+            <button id="downloadButton" class="btn btn-info">Download</button>
+            <input type="file" id="uploadInput" class="form-control-file mt-2" accept=".art" />
+            <button id="uploadButton" class="btn btn-secondary mt-1">Upload</button>
         </div>
     </div>
     <script src="controlScript.js" defer></script>
